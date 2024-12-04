@@ -1,0 +1,10 @@
+model:
+  model: ./config/model.yaml
+  pretrain_model: yolo11n-obb.pt
+
+dataset:
+  dataset: ./config/dataset.yaml
+
+hyperparameter:
+  epochs: 10000
+  # 其他超参数根据实验进行配置
