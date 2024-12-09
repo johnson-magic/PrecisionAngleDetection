@@ -10,7 +10,8 @@ def make_subdir(root: str, subdirname: str) -> str:
         subdir路径
     """
     subdir_path = os.path.join(root, subdirname)
-    os.mkdir(subdir_path)
+    if not os.path.exists(subdir_path):
+        os.mkdir(subdir_path)
     
     return subdir_path
 

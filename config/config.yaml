@@ -3,8 +3,14 @@ model:
   pretrain_model: yolo11n-obb.pt
 
 dataset:
-  dataset: ./config/dataset.yaml
+  data: ./config/dataset.yaml
 
 hyperparameter:
-  epochs: 10000
+  epochs: 250
+  # fliplr: 0
+  ## flipud: 0.25
+  ## scale: 0
+  ## mosaic: 0
+  # imgsz: 1280
+  ## multi_scale: True
   # 其他超参数根据实验进行配置

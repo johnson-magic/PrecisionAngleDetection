@@ -77,47 +77,47 @@ def add_angle_result(result: list) -> list:
     assert len(plates_res) == 1
     plates_res = plates_res[0]  # 清爽一点
     
-    slide_res = [x for x in result if x["name"] == "slide"]
-    assert len(slide_res) == 1
-    slide_res = slide_res[0]
+    # slide_res = [x for x in result if x["name"] == "slide"]
+    # assert len(slide_res) == 1
+    # slide_res = slide_res[0]
     
-    big_circle_res= [x for x in result if x["name"] == "big_circle"]
-    assert len(big_circle_res) == 1
-    big_circle_res = big_circle_res[0]
+    # big_circle_res= [x for x in result if x["name"] == "big_circle"]
+    # assert len(big_circle_res) == 1
+    # big_circle_res = big_circle_res[0]
     
     # 以方案1的方式添加angle（基于plates坐标）
     plates_coors = [(plates_res["box"][f"x{i}"], plates_res["box"][f"y{i}"])
                        for i in range(1, 5)]
     plates_res["angle"] = calculate_rotation_angle_box(plates_coors)
     
-    # 以方案2的方式添加angle (基于slide坐标)
-    slide_coors = [(slide_res["box"][f"x{i}"], slide_res["box"][f"y{i}"])
-                       for i in range(1, 5)]
-    slide_res["angle"] = calculate_rotation_angle_box(slide_coors) % 60
-    if slide_res["angle"] > 10:
-        slide_res["angle"] = slide_res["angle"] - 60
-    elif slide_res["angle"] < -10:
-        slide_res["angle"] = slide_res["angle"] + 60
+    # # 以方案2的方式添加angle (基于slide坐标)
+    # slide_coors = [(slide_res["box"][f"x{i}"], slide_res["box"][f"y{i}"])
+    #                    for i in range(1, 5)]
+    # slide_res["angle"] = calculate_rotation_angle_box(slide_coors) % 60
+    # if slide_res["angle"] > 10:
+    #     slide_res["angle"] = slide_res["angle"] - 60
+    # elif slide_res["angle"] < -10:
+    #     slide_res["angle"] = slide_res["angle"] + 60
     
     
-    # 以方案3的方式添加angle(基于big_circle && slide坐标)
-    big_circle_coor = [(big_circle_res["box"][f"x{i}"], big_circle_res["box"][f"y{i}"])
-                       for i in range(1, 5)]
-    big_circle_center_x, big_circle_center_y = calculate_center(big_circle_coor)
-    slide_center_x, slide_center_y = calculate_center(slide_coors)
-    big_circle_res["angle"] = calculate_rotation_angle_line([(big_circle_center_x,
-                                                               big_circle_center_y),
-                                                               (slide_center_x,
-                                                               slide_center_y)]) % 60
-    if big_circle_res["angle"] > 10:
-        big_circle_res["angle"] = big_circle_res["angle"] - 60
-    elif big_circle_res["angle"] < -10:
-        big_circle_res["angle"] = big_circle_res["angle"] + 60
+    # # 以方案3的方式添加angle(基于big_circle && slide坐标)
+    # big_circle_coor = [(big_circle_res["box"][f"x{i}"], big_circle_res["box"][f"y{i}"])
+    #                    for i in range(1, 5)]
+    # big_circle_center_x, big_circle_center_y = calculate_center(big_circle_coor)
+    # slide_center_x, slide_center_y = calculate_center(slide_coors)
+    # big_circle_res["angle"] = calculate_rotation_angle_line([(big_circle_center_x,
+    #                                                            big_circle_center_y),
+    #                                                            (slide_center_x,
+    #                                                            slide_center_y)]) % 60
+    # if big_circle_res["angle"] > 10:
+    #     big_circle_res["angle"] = big_circle_res["angle"] - 60
+    # elif big_circle_res["angle"] < -10:
+    #     big_circle_res["angle"] = big_circle_res["angle"] + 60
     
     result = []
     result.append(plates_res)
-    result.append(slide_res)
-    result.append(big_circle_res)
+    # result.append(slide_res)
+    # result.append(big_circle_res)
     
     return result 
     
@@ -192,18 +192,29 @@ def inference(best_model_path: str, test_dataset_images_root: str,
                 draw_label(dst_path, coor, label, (4, 42, 255), dst_path)
                 draw_axes(dst_path, coor[2], dst_path)
 
-def compute_diff(test_dataset_labels_root, inference_save_path, badcase_save_path, vis_save_path, metric_save_path):
+def compute_diff(test_dataset_labels_root, inference_save_path, badcase_save_path, vis_save_path, metric_save_path, gt_mode):
     # badcase and metric
     
+    surfix = ""
+    if gt_mode == "plates":
+        surfix = "by_plates"
+    elif gt_mode == "slide":
+        surfix = "by_slide"
+    elif gt_mode == "big_circle":
+        surfix = "by_slide_big_circle"
+    else:
+        raise NotImplementedError
+        
+    
     # badcase的保存路径分为3个子文件夹，方案1， 方案2， 方案3
-    plates_badcase_save_path = os.path.join(badcase_save_path, "方案1")
+    plates_badcase_save_path = os.path.join(badcase_save_path, f"方案1_{surfix}")
     os.makedirs(plates_badcase_save_path)
-    slide_badcase_save_path = os.path.join(badcase_save_path, "方案2")
+    slide_badcase_save_path = os.path.join(badcase_save_path, f"方案2_{surfix}")
     os.makedirs(slide_badcase_save_path)
-    big_circle_badcase_save_path = os.path.join(badcase_save_path, "方案3")
+    big_circle_badcase_save_path = os.path.join(badcase_save_path, f"方案3_{surfix}")
     os.makedirs(big_circle_badcase_save_path)
     
-    with open(os.path.join(test_dataset_labels_root, "angle_gts.json"), "r") as fr:
+    with open(os.path.join(test_dataset_labels_root, f"angle_gts_{surfix}.json"), "r") as fr:
         angle_gts = json.load(fr)
         
     diff_plates_dic = {}
@@ -242,12 +253,12 @@ def compute_diff(test_dataset_labels_root, inference_save_path, badcase_save_pat
                 if abs(v - angle_pred) != 0:
                     draw_label(os.path.join(vis_save_path, k[:-4] + ".jpg"), coor, str(round(v, 2)) , (4, 42, 255), os.path.join(big_circle_badcase_save_path, k[:-4] + ".jpg"))
             
-    plot_scatter_with_stats(list(diff_plates_dic.values()), os.path.join(metric_save_path, "方案1.png"))
-    plot_scatter_with_stats(list(diff_slide_dic.values()), os.path.join(metric_save_path, "方案2.png"))
-    plot_scatter_with_stats(list(diff_big_circle_dic.values()), os.path.join(metric_save_path, "方案3.png"))
+    plot_scatter_with_stats(list(diff_plates_dic.values()), os.path.join(metric_save_path, f"方案1_{surfix}.png"))
+    # plot_scatter_with_stats(list(diff_slide_dic.values()), os.path.join(metric_save_path, f"方案2_{surfix}.png"))
+    # plot_scatter_with_stats(list(diff_big_circle_dic.values()), os.path.join(metric_save_path, f"方案3_{surfix}.png"))
     
 
-def metric(test_dataset_images_root: str, test_dataset_labels_root: str, best_model_path: str)-> None:
+def metric(test_dataset_images_root: str, test_dataset_labels_root: str, best_model_path: str, gt_mode: str)-> None:
     """度量模型在测试集上的效果。包含以下功能：
     * 推理结果（包含目标检测、角度检测）
     * 可视化结果（包含目标检测、角度检测）
@@ -264,7 +275,7 @@ def metric(test_dataset_images_root: str, test_dataset_labels_root: str, best_mo
         make_metric_about_save_path(save_root_path)
     
     inference(best_model_path, test_dataset_images_root, inference_save_path, vis_save_path)
-    compute_diff(test_dataset_labels_root, inference_save_path, badcase_save_path, vis_save_path, metric_save_path)
+    compute_diff(test_dataset_labels_root, inference_save_path, badcase_save_path, vis_save_path, metric_save_path, gt_mode)
     
 
 
@@ -276,6 +287,7 @@ def arg_parser():
     parser.add_argument('--test_dataset_images_root', type=str, required=True, help='测试集图片路径')
     parser.add_argument('--test_dataset_labels_root', type=str, required=True, help='测试集真值路径')
     parser.add_argument('--best_model_path', type=str, required=True, help='测试（最好）模型路径')
+    parser.add_argument('--gt_mode', type=str, required=True, help='one of plates, slide, big_circle')
 
     return parser
 
@@ -286,7 +298,7 @@ if __name__ == "__main__":
     # best_model_path = "runs/obb/train/weights/best.pt"
     args = parser.parse_args()
     
-    metric(args.test_dataset_images_root, args.test_dataset_labels_root, args.best_model_path)
+    metric(args.test_dataset_images_root, args.test_dataset_labels_root, args.best_model_path, args.gt_mode)
     
     
     
